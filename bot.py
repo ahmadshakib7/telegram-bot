@@ -1,7 +1,4 @@
-
-# Create the complete bot.py with auto video URL detection
-
-bot_code = '''import os
+import os
 import logging
 from flask import Flask, request
 import requests as http_requests
@@ -96,9 +93,9 @@ def get_football_info():
         response = http_requests.get(url, headers=headers, timeout=10)
         data = response.json()
         if data.get('response'):
-            text = "⚽ <b>لیگ‌های معروف:</b>\\n\\n"
+            text = "⚽ <b>لیگ‌های معروف:</b>\n\n"
             for league in data['response'][:5]:
-                text += f"• {league['league']['name']} ({league['country']['name']})\\n"
+                text += f"• {league['league']['name']} ({league['country']['name']})\n"
             return text
         return "❌ اطلاعاتی یافت نشد!"
     except Exception as e:
@@ -224,9 +221,9 @@ def webhook():
                 result = download_video(video_url)
                 if result['success']:
                     download_url = result['url']
-                    send_message(chat_id, f"✅ <b>ویدیو آماده دانلود!</b>\\n\\n<a href='{download_url}'>⬇️ کلیک کنید برای دانلود</a>\\n\\n⚠️ اگه لینک کار نکرد، ۱۰ ثانیه صبر کنید و دوباره امتحان کنید.")
+                    send_message(chat_id, f"✅ <b>ویدیو آماده دانلود!</b>\n\n<a href='{download_url}'>⬇️ کلیک کنید برای دانلود</a>\n\n⚠️ اگه لینک کار نکرد، ۱۰ ثانیه صبر کنید و دوباره امتحان کنید.")
                 else:
-                    send_message(chat_id, f"❌ <b>خطا در دانلود:</b>\\n{result['error']}\\n\\n💡 نکته: Cobalt API ممکنه بعضی لینک‌ها رو پشتیبانی نکنه.")
+                    send_message(chat_id, f"❌ <b>خطا در دانلود:</b>\n{result['error']}\n\n💡 نکته: Cobalt API ممکنه بعضی لینک‌ها رو پشتیبانی نکنه.")
                 
             else:
                 # Chat with AI
@@ -243,15 +240,3 @@ def webhook():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-'''
-
-with open('/mnt/agents/output/bot.py', 'w', encoding='utf-8') as f:
-    f.write(bot_code)
-
-print("Complete bot.py with auto video detection created!")
-print("\nFeatures:")
-print("1. AI Chat with Groq")
-print("2. Football info")
-print("3. Video download with Cobalt API")
-print("4. Auto-detect video URLs (no /download needed)")
-print("\nJust paste any video link and bot will download it!")
