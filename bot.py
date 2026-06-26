@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 ADMIN_ID = os.environ.get('ADMIN_ID')
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY')
 FOOTBALL_API_KEY = os.environ.get('FOOTBALL_API_KEY')
 
 app = Flask(__name__)
@@ -24,26 +24,46 @@ def send_message(chat_id, text):
         logger.error(f"Error: {e}")
         return None
 
-def chat_with_groq(user_message):
+def chat_with_ai(user_message):
     try:
-        headers = {'Authorization': f'Bearer {GROQ_API_KEY}', 'Content-Type': 'application/json'}
+        headers = {
+            'Authorization': f'Bearer {OPENROUTER_API_KEY}',
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://as-ai-bot.onrender.com',
+            'X-Title': 'AS AI Assistant Bot'
+        }
         payload = {
             'messages': [
                 {'role': 'system', 'content': 'You are a helpful AI assistant. Respond in the same language as the user.'},
                 {'role': 'user', 'content': user_message}
             ],
-            'model': 'llama3-8b-8192', 'temperature': 0.7, 'max_tokens': 1024
+            'model': 'meta-llama/llama-3.1-8b-instruct:free',
+            'temperature': 0.7,
+            'max_tokens': 1024
         }
-        response = http_requests.post('https://api.groq.com/openai/v1/chat/completions', headers=headers, json=payload, timeout=30)
-        return response.json()['choices'][0]['message']['content']
+        response = http_requests.post(
+            'https://openrouter.ai/api/v1/chat/completions',
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        data = response.json()
+        if 'choices' in data and len(data['choices']) > 0:
+            return data['choices'][0]['message']['content']
+        else:
+            logger.error(f"OpenRouter error: {data}")
+            return "❌ خطا در پردازش پیام!"
     except Exception as e:
-        logger.error(f"Groq error: {e}")
-        return "❌ خطا در پردازش پیام!"
+        logger.error(f"OpenRouter API error: {e}")
+        return "❌ خطا در پردازش پیام! لطفاً دوباره تلاش کنید."
 
 def get_football_info():
     try:
         url = "https://v3.football.api-sports.io/leagues"
-        headers = {'x-rapidapi-key': FOOTBALL_API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io'}
+        headers = {
+            'x-rapidapi-key': FOOTBALL_API_KEY,
+            'x-rapidapi-host': 'v3.football.api-sports.io'
+        }
         response = http_requests.get(url, headers=headers, timeout=10)
         data = response.json()
         if data.get('response'):
@@ -89,7 +109,7 @@ def webhook():
             elif text == '/football':
                 send_message(chat_id, get_football_info())
             else:
-                send_message(chat_id, chat_with_groq(text))
+                send_message(chat_id, chat_with_ai(text))
         return 'OK', 200
     except Exception as e:
         logger.error(f"Webhook error: {e}")
